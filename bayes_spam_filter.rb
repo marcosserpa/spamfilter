@@ -84,7 +84,7 @@ class BayesSpamFilter
   	spam_averages, not_spam_averages, spam_counter, not_spam_counter = calculates_averages(training_set)
   	general_averages = calculates_general_averages(training_set)
     spam_probability_minor_equal, spam_probability_more, not_spam_probability_minor_equal, not_spam_probability_more =
-      calculates_probabilities(training_set, spam_counter, not_spam_counter, spam_averages, not_spam_averages)
+      calculates_probabilities(training_set, general_averages, spam_counter, not_spam_counter, spam_averages, not_spam_averages)
 
   	probabilitiesCaseI,probabilitiesCaseII,probabilitiesCaseIII,probabilitiesCaseIV = normalizeTrainingSet(trainEmail,meanValues,spamCount,notSpamCount)
   	resultDict,scoreList = bernoulliCalculation(testingGroup,meanValues,probabilitiesCaseI,probabilitiesCaseII,probabilitiesCaseIII,probabilitiesCaseIV,spamCount,notSpamCount)
@@ -157,7 +157,7 @@ class BayesSpamFilter
   #Takes training email list and mean values dictionary and returns 4 dictionaries of probabilities which are caclulated using the above formulae. It also returns the spam and ham count for the training set.
   #called by the naive bayes classisifer using bernoulli distribution.
   #contract -> (list,dict,int,int) returns (dict,dict,dict,dict)
-  def self.calculates_probabilities(training_set, spam_counter, not_spam_counter, spam_averages, not_spam_avegares)
+  def self.calculates_probabilities(training_set, general_averages, spam_counter, not_spam_counter, spam_averages, not_spam_avegares)
     spam_probability_minor_equal = {}
     spam_probability_more = {}
     not_spam_probability_minor_equal = {}
@@ -172,45 +172,25 @@ class BayesSpamFilter
 
     training_set.each do |email|
       features.each do |feature|
-        if (email[feature] <=
+        if (email[feature] <= general_averages[feature] && email[:spam] == 1)
+          spam_probability_minor_equal[feature] += 1
+        elsif (email[feature] > general_averages[feature] && email[:spam] == 1)
+          spam_probability_more[feature] += 1
+        elsif (email[feature] <= general_averages[feature] && email[:spam] == 0)
+          not_spam_probability_minor_equal[feature] += 1
+        elsif (email[feature] > general_averages[feature] && email[:spam] == 0)
+          not_spam_probability_more[feature] += 1
       end
     end
 
+    features.each do |feature|
+      spam_probability_minor_equal[feature] = (spam_probability_minor_equal[feature] + 1) / (spam_counter + 2)
+      spam_probability_more[feature] = (spam_probability_more[feature] + 1) / (spam_counter + 2)
+      not_spam_probability_minor_equal[feature] = (not_spam_probability_minor_equal[feature] + 1) / (spam_counter + 2)
+      not_spam_probability_more[feature] = (not_spam_probability_more[feature] + 1) / (spam_counter + 2)
+    end
+
+    return [spam_probability_minor_equal, spam_probability_more, not_spam_probability_minor_equal, not_spam_probability_more]
   end
-
-spam_probability_minor_equal, spam_probability_more, not_spam_probability_minor_equal, not_spam_probability_more =
-  verifies_equality(spam_counter, not_spam_counter, spam_averages, not_spam_averages)
-  def normalizeTrainingSet(trainEmail,meanValues,spamCount,notSpamCount):
-  	probabilitiesCaseI = {}
-  	probabilitiesCaseII = {}
-  	probabilitiesCaseIII = {}
-  	probabilitiesCaseIV = {}
-
-  	for i in range(0,57):
-  		probabilitiesCaseI[i] = 0.0
-  		probabilitiesCaseII[i] = 0.0
-  		probabilitiesCaseIII[i] = 0.0
-  		probabilitiesCaseIV[i] = 0.0
-
-  	for email in trainEmail:
-  		email = email.split(',')
-
-  		for feature in range(0,57):
-  			if (float(email[feature])<=meanValues[feature]) and int(email[57])==1:
-  				probabilitiesCaseI[feature] += 1
-  			elif (float(email[feature])>meanValues[feature]) and int(email[57])==1:
-  				probabilitiesCaseII[feature] += 1
-  			elif (float(email[feature])<=meanValues[feature]) and int(email[57])==0:
-  				probabilitiesCaseIII[feature] += 1
-  			elif (float(email[feature])>meanValues[feature]) and int(email[57])==0:
-  				probabilitiesCaseIV[feature] += 1
-
-  	for i in range(0,57):
-  		probabilitiesCaseI[i] = (probabilitiesCaseI[i]+1)/(float(spamCount) + 2)
-  		probabilitiesCaseII[i] = (probabilitiesCaseII[i]+1)/(float(spamCount) + 2)
-  		probabilitiesCaseIII[i] = (probabilitiesCaseIII[i]+1)/(float(notSpamCount) + 2)
-  		probabilitiesCaseIV[i] = (probabilitiesCaseIV[i]+1)/(float(notSpamCount) + 2)
-
-  	return probabilitiesCaseI,probabilitiesCaseII,probabilitiesCaseIII,probabilitiesCaseIV
 
 end
