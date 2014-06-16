@@ -27,10 +27,7 @@ class BayesSpamFilter
                :char_freq_number, ##
                :capital_run_length_average, :capital_run_length_longest, :capital_run_length_total, :spam ]
 
-  def self.getSampleHashs
-    # csv = File.read('spambase_2.csv')
-    # spam_base = CSV.new(csv, :converters => :all)
-    # spam_base_array = spam_base.to_a
+  def self.get_sample_hashs
     puts "Type the CSV file name with the extension:"
     file_name = gets.chomp
 
