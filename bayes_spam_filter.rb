@@ -75,25 +75,28 @@ class BayesSpamFilter
   #input is the testing group and the training group of emails.
   #prints the error rate,false positive rate, false negative rate, and the area under the curve for a particular fold.
   #contract -> (list,list) returns (void), like the main function for the bernoulli method. Works by calling helper functions.
-  def self.bernoulli_distribuction(training_set, testing_set):
+  def self.bernoulli_distribuction(training_set, testing_set)
   	$tprList
   	tprList = []
   	$fprList
   	fprList = []
 
-  	spam_averages, not_spam_averages, spam_counter, not_spam_counter = calculateMeanValues(training_set)
-  	meanValues = calculateGaussianMean(trainEmail)
+  	spam_averages, not_spam_averages, spam_counter, not_spam_counter = calculates_averages(training_set)
+  	general_averages = calculates_general_averages(training_set)
+    spam_probability_minor_equal, spam_probability_more, not_spam_probability_minor_equal, not_spam_probability_more =
+      calculates_probabilities(training_set, spam_counter, not_spam_counter, spam_averages, not_spam_averages)
+
   	probabilitiesCaseI,probabilitiesCaseII,probabilitiesCaseIII,probabilitiesCaseIV = normalizeTrainingSet(trainEmail,meanValues,spamCount,notSpamCount)
   	resultDict,scoreList = bernoulliCalculation(testingGroup,meanValues,probabilitiesCaseI,probabilitiesCaseII,probabilitiesCaseIII,probabilitiesCaseIV,spamCount,notSpamCount)
   	errorRate,actualDict,falsePositiveRate,falseNegativeRate = calculateErrorRate(testingGroup,resultDict)
   	getROCPoints(scoreList,actualDict,testingGroup)
   end
 
-  # Calculates the conditional average values for the features in the training set spam/not spam emails.
+  # Calculates the conditional averages for the features in the training set discriminationg spam/not spam emails.
   # Input is the training set and returns the mean values hash and a list of emails.
   # Helper function called by all the 3 classifiers.
   # contract -> (list) returns (dict, dict, int,int)
-  def self.calculates_averages(training_set):
+  def self.calculates_averages(training_set)
   	train_email = []
   	spam_averages = {}
   	not_spam_averages = {}
@@ -121,5 +124,93 @@ class BayesSpamFilter
 
     return [spam_averages, not_spam_averages, spam_counter, not_spam_counter]
   end
+
+  # Calculates the training_set averages without spam/not discrimination.
+  #takes as input the entire training set of emails.
+  #returns a idctionary of mean values for all features of the training set.
+  #contract -> (list) returns (dict)
+  def self.calculates_general_avegares(training_set)
+    general_averages = {}
+
+    features.each do |iterator|
+      general_averages[iterator] = 0
+    end
+
+    training_set.each do |email|
+      features.each do |feature|
+        general_averages[feature] += email[feature]
+      end
+    end
+
+    features.each do |feature|
+      general_averages[feature] /= training_set.size
+    end
+
+    general_averages
+  end
+
+  #Works with the training set and the mean values, classifying the email probabilities according to spam/not spam and feature/meanAverageValue comparison.
+  # P(feature value <= average(feature) | spam)
+  # P(feature value > average(feature) | spam)
+  # P(feature value <= average(feature) | non-spam)
+  # P(feature value > average(feature) | non-spam)
+  #Takes training email list and mean values dictionary and returns 4 dictionaries of probabilities which are caclulated using the above formulae. It also returns the spam and ham count for the training set.
+  #called by the naive bayes classisifer using bernoulli distribution.
+  #contract -> (list,dict,int,int) returns (dict,dict,dict,dict)
+  def self.calculates_probabilities(training_set, spam_counter, not_spam_counter, spam_averages, not_spam_avegares)
+    spam_probability_minor_equal = {}
+    spam_probability_more = {}
+    not_spam_probability_minor_equal = {}
+    not_spam_probability_more = {}
+
+    features.each do |feature|
+      spam_probability_minor_equal = 0.0
+      spam_probability_more = 0.0
+      not_spam_probability_minor_equal = 0.0
+      not_spam_probability_more = 0.0
+    end
+
+    training_set.each do |email|
+      features.each do |feature|
+        if (email[feature] <=
+      end
+    end
+
+  end
+
+spam_probability_minor_equal, spam_probability_more, not_spam_probability_minor_equal, not_spam_probability_more =
+  verifies_equality(spam_counter, not_spam_counter, spam_averages, not_spam_averages)
+  def normalizeTrainingSet(trainEmail,meanValues,spamCount,notSpamCount):
+  	probabilitiesCaseI = {}
+  	probabilitiesCaseII = {}
+  	probabilitiesCaseIII = {}
+  	probabilitiesCaseIV = {}
+
+  	for i in range(0,57):
+  		probabilitiesCaseI[i] = 0.0
+  		probabilitiesCaseII[i] = 0.0
+  		probabilitiesCaseIII[i] = 0.0
+  		probabilitiesCaseIV[i] = 0.0
+
+  	for email in trainEmail:
+  		email = email.split(',')
+
+  		for feature in range(0,57):
+  			if (float(email[feature])<=meanValues[feature]) and int(email[57])==1:
+  				probabilitiesCaseI[feature] += 1
+  			elif (float(email[feature])>meanValues[feature]) and int(email[57])==1:
+  				probabilitiesCaseII[feature] += 1
+  			elif (float(email[feature])<=meanValues[feature]) and int(email[57])==0:
+  				probabilitiesCaseIII[feature] += 1
+  			elif (float(email[feature])>meanValues[feature]) and int(email[57])==0:
+  				probabilitiesCaseIV[feature] += 1
+
+  	for i in range(0,57):
+  		probabilitiesCaseI[i] = (probabilitiesCaseI[i]+1)/(float(spamCount) + 2)
+  		probabilitiesCaseII[i] = (probabilitiesCaseII[i]+1)/(float(spamCount) + 2)
+  		probabilitiesCaseIII[i] = (probabilitiesCaseIII[i]+1)/(float(notSpamCount) + 2)
+  		probabilitiesCaseIV[i] = (probabilitiesCaseIV[i]+1)/(float(notSpamCount) + 2)
+
+  	return probabilitiesCaseI,probabilitiesCaseII,probabilitiesCaseIII,probabilitiesCaseIV
 
 end
