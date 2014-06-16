@@ -45,7 +45,7 @@ class BayesSpamFilter
 
     # Choose randomly the features, if not all
     unless features_quantity == 'all'
-      features_indexes = features_quantity.times.map{ 0 + rand(57) }
+      features_indexes = features_quantity.to_i.times.map{ 0 + rand(57) }
       feats = []
 
       features_indexes.each do |index|
